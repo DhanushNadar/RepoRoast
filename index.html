@@ -1,0 +1,673 @@
+<!DOCTYPE html>
+<html lang="en">
+
+<head>
+    <meta charset="UTF-8" />
+    <title>RepoRoast | GitHub Repository Analyzer</title>
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <link rel="stylesheet" href="styles.css" />
+
+    <!-- Tailwind CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+
+    <!-- Font -->
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Sora:wght@600;700;800&display=swap" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/remixicon/fonts/remixicon.css" rel="stylesheet">
+
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+        }
+
+        /* Grid background */
+        .grid-bg {
+            background-image:
+                linear-gradient(to right, rgba(15, 23, 42, 0.05) 1px, transparent 1px),
+                linear-gradient(to bottom, rgba(15, 23, 42, 0.05) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+
+        #profile-container img {
+            transition: transform 0.3s ease, box-shadow 0.3s ease;
+        }
+
+        #profile-container img:hover {
+            transform: scale(1.1);
+            box-shadow: 0 0 20px rgba(59, 130, 246, 0.7);
+            /* blue glow */
+        }
+
+        /* Timeline vertical line */
+        /* Vertical timeline line */
+        #roadmap-timeline::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 100%;
+            background: linear-gradient(to bottom, #3b82f6, #6366f1);
+            border-radius: 2px;
+            z-index: 0;
+        }
+    </style>
+</head>
+
+<body class="bg-slate-50 text-slate-900 min-h-screen grid-bg">
+
+    <!-- Toast Container -->
+    <div id="toast-container" class="fixed bottom-5 right-5 z-50 flex flex-col gap-2 items-end"></div>
+
+
+    <!-- Premium Glass Floating Navbar -->
+    <nav class="fixed top-5 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-6xl">
+        <div class="relative rounded-2xl bg-white/60 backdrop-blur-2xl
+           border border-white/30 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]
+           px-8 py-4">
+
+            <!-- Gradient Border Glow -->
+            <div class="absolute inset-0 rounded-2xl pointer-events-none
+             bg-gradient-to-r from-blue-500/20 via-indigo-500/20 to-cyan-500/20
+             blur-lg opacity-70">
+            </div>
+
+            <!-- Content -->
+            <div class="relative flex justify-between items-center">
+                <div class="flex items-center gap-3">
+                    <h1 class="relative text-xl sm:text-2xl font-extrabold
+         font-['Sora']
+         tracking-tight
+         text-slate-900
+         cursor-pointer select-none
+         transition-all duration-500 ease-out
+         hover:scale-[1.03]
+         hover:text-orange-600">
+
+                        RepoRoast
+
+                        <span class="absolute left-0 -bottom-1 h-[3px] w-0 bg-blue-600
+           transition-all duration-500
+           group-hover:w-full">
+                        </span>
+                    </h1>
+
+                </div>
+
+                <span class="text-sm text-slate-600 hidden md:block">
+                    Intelligent GitHub Repository Evaluation
+                </span>
+            </div>
+
+        </div>
+    </nav>
+
+
+    <section class="max-w-5xl mx-auto px-6 py-24 text-center pt-52">
+        <h2 class="text-4xl md:text-5xl font-extrabold mb-6 leading-tight">
+            Understand the Quality of Your
+            <span class="text-blue-600">GitHub Repository</span>
+        </h2>
+
+        <p class="text-slate-600 text-lg max-w-3xl mx-auto mb-12">
+            RepoRoast analyzes your public GitHub repository and generates a
+            <strong>score, technical summary,</strong> and a
+            <strong>clear improvement roadmap</strong> — just like feedback from a mentor.
+        </p>
+
+        <div class="bg-white rounded-2xl shadow-lg border border-slate-200 p-6 max-w-2xl mx-auto">
+            <div class="flex flex-col md:flex-row gap-4">
+                <input id="repoUrl" type="text" placeholder="https://github.com/username/repository"
+                    class="flex-1 px-4 py-3 rounded-lg border border-slate-300 focus:outline-none focus:ring-2 focus:ring-blue-500" />
+
+                <button onclick="analyzeRepo()"
+                    class="px-6 py-3 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-semibold transition">
+                    Analyze Repository
+                </button>
+            </div>
+
+            <p id="loading" class="mt-4 text-blue-600 hidden text-sm flex items-center justify-center gap-2">
+                <svg class="animate-spin h-4 w-4 text-blue-600" xmlns="http://www.w3.org/2000/svg" fill="none"
+                    viewBox="0 0 24 24">
+                    <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                    <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z"></path>
+                </svg>
+                Analyzing repository data…
+            </p>
+
+        </div>
+    </section>
+
+    <section id="results" class="max-w-5xl mx-auto px-6 pb-24 hidden">
+
+        <div class="grid md:grid-cols-3 gap-6 mb-6">
+
+            <!-- Profile Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-slate-200 h-full flex flex-col items-center">
+                <div class="w-32 h-32 rounded-full overflow-hidden border-4 border-blue-500 shadow-lg">
+                    <img id="profile-pic" src="" alt="Profile" class="w-full h-full object-cover">
+                </div>
+            </div>
+
+            <!-- Score Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-md border border-slate-200 h-full flex flex-col justify-center items-center">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Repository Score</h3>
+                <p class="text-5xl font-extrabold text-blue-600" id="score">-- / 100</p>
+            </div>
+
+            <!-- Repo Name Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-md border border-slate-200 h-full flex flex-col justify-center items-center">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Repository Name</h3>
+                <p class="text-lg font-bold text-slate-700" id="repo-name">--</p>
+                <div class="mt-4 flex gap-6 text-center">
+                    <div>
+                        <p class="text-slate-500 text-sm">Commits</p>
+                        <span id="commits" class="font-semibold text-slate-700">--</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 text-sm">Stars</p>
+                        <span id="stars" class="font-semibold text-slate-700">--</span>
+                    </div>
+                    <div>
+                        <p class="text-slate-500 text-sm">Forks</p>
+                        <span id="forks" class="font-semibold text-slate-700">--</span>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Summary Card -->
+            <div
+                class="bg-white rounded-2xl p-6 shadow-md border border-slate-200 md:col-span-2 h-full flex flex-col justify-center">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Evaluation Summary</h3>
+                <p id="summary" class="text-slate-700 leading-relaxed">--</p>
+            </div>
+
+            <!-- Tech Stack Card -->
+            <div class="bg-white rounded-2xl p-6 shadow-md border border-slate-200 h-full flex flex-col justify-center">
+                <h3 class="text-sm font-semibold text-slate-500 mb-2">Tech Stack / Languages</h3>
+                <p id="tech-stack" class="text-slate-700 leading-relaxed">--</p>
+            </div>
+
+        </div>
+
+
+        <!-- Roadmap -->
+        <div class="bg-white rounded-2xl p-6 shadow-2xl border border-slate-200">
+            <h3 class="text-xl font-semibold mb-6 text-slate-700">Personalized Improvement Roadmap</h3>
+
+            <div id="roadmap-timeline" class="relative mt-6 flex flex-col items-center">
+                <!-- Steps will be dynamically injected here -->
+            </div>
+
+        </div>
+
+
+    </section>
+
+    <!-- Footer -->
+    <!-- Glass Floating Footer -->
+<footer class="fixed bottom-5 left-1/2 -translate-x-1/2 z-50 w-[94%] max-w-6xl">
+    <div class="relative rounded-2xl bg-white/20 backdrop-blur-2xl
+                border border-white/20 shadow-[0_20px_50px_-12px_rgba(0,0,0,0.25)]
+                px-8 py-4 flex flex-col md:flex-row items-center justify-between">
+
+        <!-- Content -->
+        <div class="relative flex flex-col md:flex-row items-center justify-between w-full gap-4">
+
+            <!-- Left: Made by -->
+            <div class="flex items-center space-x-2 text-sm md:text-base text-black">
+                <span>Made by Dhanush</span>
+                <span class="text-red-500 animate-pulse">❤️</span>
+            </div>
+
+            <!-- Right: Social Icons -->
+            <div class="flex space-x-5 text-black">
+                <a href="https://github.com/DhanushNadar" target="_blank" 
+                   class="transform hover:-translate-y-1 hover:scale-110 transition-all duration-300">
+                    <i class="ri-github-line text-2xl"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/dhanush-nadar-25aa29265/" target="_blank" 
+                   class="transform hover:-translate-y-1 hover:scale-110 transition-all duration-300">
+                    <i class="ri-linkedin-box-line text-2xl"></i>
+                </a>
+            </div>
+        </div>
+    </div>
+</footer>
+
+
+
+
+
+
+    <!-- JS -->
+
+    <script>
+
+        async function analyzeRepo() {
+            const url = document.getElementById("repoUrl").value.trim();
+            if (!url) {
+                showToast("Please enter a valid GitHub repository URL.");
+                return;
+            }
+
+            const loadingEl = document.getElementById("loading");
+            const resultsEl = document.getElementById("results");
+
+            loadingEl.classList.remove("hidden");
+            resultsEl.classList.add("hidden");
+
+            const repoData = await fetchRepoData(url);
+
+            const techStackEl = document.getElementById("tech-stack");
+            const languages = Object.keys(repoData.languages);
+            techStackEl.innerText = languages.length ? languages.join(", ") : "No languages detected";
+
+            loadingEl.classList.add("hidden");
+
+            if (!repoData) {
+                showToast("Failed to fetch repository data");
+                return;
+            }
+
+            // Set profile picture
+            const profilePic = document.getElementById("profile-pic");
+            profilePic.src = repoData.ownerAvatar;
+            profilePic.alt = repoData.ownerLogin;
+
+            // Set repo name
+            document.getElementById("repo-name").innerText = repoData.name;
+
+            // Animate numbers
+            setAnimatedValue("commits", repoData.commits);
+            setAnimatedValue("stars", repoData.stars);
+            setAnimatedValue("forks", repoData.forks);
+
+            // Calculate score
+            let score = 50;
+            if (repoData.description) score += 10;
+            if (repoData.commits > 5) score += 15;
+            if (repoData.stars > 0) score += 10;
+            if (repoData.language) score += 5;
+            if (repoData.forks > 0) score += 5;
+            if (repoData.commits > 20) score += 5;
+
+            animateScore(score);
+
+            // Dynamic summary
+            const summaryText = await generateDynamicSummary(repoData);
+            document.getElementById("summary").innerText = summaryText;
+
+            // Roadmap
+            const roadmap = [];
+
+            // Helper to add roadmap items with priority
+            function addRoadmapItem(text, icon, priority) {
+                roadmap.push({ text, icon, priority });
+            }
+
+            // 1️⃣ Documentation & Contribution
+            if (!repoData.readme)
+                addRoadmapItem("Add a comprehensive README with setup instructions", "ri-file-text-line", 20);
+
+            if (!repoData.files.some(f => f.name.toLowerCase() === "contributing.md"))
+                addRoadmapItem("Add CONTRIBUTING.md for collaboration guidelines", "ri-user-settings-line", 18);
+
+            if (!repoData.files.some(f => f.name.toLowerCase() === "changelog.md"))
+                addRoadmapItem("Add CHANGELOG.md for tracking updates", "ri-file-list-3-line", 16);
+
+            if (!repoData.files.some(f => f.name.toLowerCase() === "code_of_conduct.md"))
+                addRoadmapItem("Add CODE_OF_CONDUCT.md for community standards", "ri-shield-line", 16);
+
+            if (!repoData.files.some(f => f.name.toLowerCase().includes("license")))
+                addRoadmapItem("Add LICENSE to define usage terms", "ri-file-paper-2-line", 18);
+
+            // 2️⃣ Repository Structure – dynamic based on tech stack
+            const techFolderMapping = {
+                "JavaScript": ["src", "tests", "docs"],
+                "TypeScript": ["src", "tests", "docs"],
+                "Python": ["src", "tests", "docs"],
+                "Ruby": ["lib", "tests", "docs"],
+                "Java": ["src", "tests", "docs"],
+                "Go": ["cmd", "pkg", "tests"],
+                "C++": ["src", "include", "tests"],
+                "C#": ["src", "tests", "docs"],
+                "HTML": ["src", "docs"], // frontend project
+                "CSS": ["src", "docs"],
+                "React": ["src", "tests", "docs"],
+                "Vue": ["src", "tests", "docs"],
+            };
+
+            // Detect relevant folders based on repo languages
+            const languagesUsed = Object.keys(repoData.languages || {});
+            let requiredFolders = new Set();
+
+            languagesUsed.forEach(lang => {
+                if (techFolderMapping[lang]) {
+                    techFolderMapping[lang].forEach(folder => requiredFolders.add(folder));
+                }
+            });
+
+            // Fallback for unknown stack
+            if (requiredFolders.size === 0) {
+                requiredFolders = new Set(["src", "tests", "docs"]);
+            }
+
+            // Add missing folders dynamically
+            requiredFolders.forEach(folder => {
+                if (!repoData.files.some(f => f.name.toLowerCase() === folder.toLowerCase())) {
+                    addRoadmapItem(`Add ${folder}/ folder`, "ri-folder-2-line", 14);
+                }
+            });
+
+            if (!repoData.files.some(f => f.name === ".gitignore"))
+                addRoadmapItem("Add .gitignore", "ri-forbid-line", 12);
+
+            // 3️⃣ Commit Practices
+            if (typeof repoData.commits === "number" && repoData.commits < 5)
+                addRoadmapItem("Increase commit frequency with meaningful messages", "ri-flashlight-line", 20);
+
+            // 4️⃣ Testing & Code Quality – dynamic check
+            const hasTests = repoData.files.some(f => /test/i.test(f.name) || f.name.includes("__tests__"));
+            if (!hasTests && requiredFolders.has("tests"))
+                addRoadmapItem("Add unit and integration tests", "ri-test-tube-line", 20);
+
+            // 5️⃣ CI/CD & Automation
+            let hasWorkflows = false;
+            try {
+                const workflowsRes = await fetch(`https://api.github.com/repos/${repoData.ownerLogin}/${repoData.name}/contents/.github/workflows`);
+                hasWorkflows = workflowsRes.ok && (await workflowsRes.json()).length > 0;
+            } catch (err) {
+                hasWorkflows = false;
+            }
+            if (!hasWorkflows)
+                addRoadmapItem("Set up CI/CD workflows (GitHub Actions)", "ri-cpu-line", 20);
+
+            if (!repoData.files.some(f => f.name.toLowerCase() === "dockerfile") && languagesUsed.some(l => ["JavaScript", "Python", "Go", "Ruby", "Java"].includes(l)))
+                addRoadmapItem("Add Dockerfile for containerization", "ri-docker-line", 18);
+
+            // 6️⃣ Visibility & Collaboration
+            let topicsData = { names: [] };
+            try {
+                const topicsRes = await fetch(`https://api.github.com/repos/${repoData.ownerLogin}/${repoData.name}/topics`, {
+                    headers: { Accept: "application/vnd.github.mercy-preview+json" }
+                });
+                if (topicsRes.ok) topicsData = await topicsRes.json();
+            } catch (err) { }
+
+            if (!topicsData.names.length)
+                addRoadmapItem("Add topics/tags for discoverability", "ri-hashtag", 14);
+
+            if (!repoData.has_issues)
+                addRoadmapItem("Enable issues for collaboration", "ri-feedback-line", 12);
+
+            // 7️⃣ Optional Badges
+            if (!repoData.readmeBadges)
+                addRoadmapItem("Add badges for build, coverage, license", "ri-medal-line", 10);
+
+            // Sort by priority descending
+            roadmap.sort((a, b) => b.priority - a.priority);
+
+            // Render roadmap
+            const container = document.getElementById("roadmap-timeline");
+            container.innerHTML = "";
+            roadmap.forEach((step, index) => {
+                const isLeft = index % 2 === 0;
+
+                const wrapper = document.createElement("div");
+                wrapper.className = `w-full flex ${isLeft ? 'justify-start' : 'justify-end'} relative mb-12 mt-10`;
+
+                const card = document.createElement("div");
+                card.className = `bg-white p-4 rounded-xl shadow-lg w-72 hover:scale-105 transition z-10 ${isLeft ? 'ml-20' : 'mr-20'}`;
+                card.textContent = step.text;
+
+                const circle = document.createElement("div");
+                circle.className = `absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 h-12 w-12 rounded-full bg-blue-500 text-white flex items-center justify-center ring-2 ring-blue-300 z-20`;
+
+                const iconEl = document.createElement("i");
+                iconEl.className = `${step.icon} text-xl`;
+                circle.appendChild(iconEl);
+
+                wrapper.appendChild(card);
+                wrapper.appendChild(circle);
+                container.appendChild(wrapper);
+            });
+
+
+
+
+            resultsEl.classList.remove("hidden");
+
+
+        }
+
+        function setAnimatedValue(id, value) {
+            const el = document.getElementById(id);
+            if (typeof value === "number") {
+                animateValue(id, 0, value, 1000);
+            } else {
+                el.textContent = value; // e.g., "30+"
+            }
+        }
+
+        async function fetchRepoData(repoUrl) {
+            try {
+                const parts = repoUrl.replace("https://github.com/", "").split("/");
+                if (parts.length < 2) {
+                    showToast("Please enter a valid GitHub repository URL: https://github.com/username/repository");
+                    return null;
+                }
+                const owner = parts[0];
+                const repo = parts[1];
+
+                // Repo info
+                const repoRes = await fetch(`https://api.github.com/repos/${owner}/${repo}`);
+                if (!repoRes.ok) throw new Error("Repo not found");
+                const repoData = await repoRes.json();
+
+                // README presence
+                const readmeRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/readme`);
+                const readme = readmeRes.ok;
+
+                // Files & folders (root level)
+                const filesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/contents`);
+                const files = filesRes.ok ? await filesRes.json() : [];
+
+                // Full commit history (max 100 for simplicity)
+                const commitsResAll = await fetch(`https://api.github.com/repos/${owner}/${repo}/commits?per_page=100`);
+                const commitsList = commitsResAll.ok ? await commitsResAll.json() : [];
+
+                // Commit count (for score)
+                let commitsCount = commitsList.length;
+                if (commitsCount > 30) commitsCount = "30+";
+
+                // Languages / tech stack
+                const languagesRes = await fetch(`https://api.github.com/repos/${owner}/${repo}/languages`);
+                const languages = languagesRes.ok ? await languagesRes.json() : {};
+
+                return {
+                    name: repoData.name,
+                    description: repoData.description,
+                    stars: repoData.stargazers_count,
+                    forks: repoData.forks_count,
+                    commits: commitsCount,
+                    commitsList, // for dynamic summary
+                    language: repoData.language,
+                    languages,   // full language breakdown
+                    files,       // root-level files
+                    readme,      // boolean
+                    createdAt: repoData.created_at,
+                    ownerLogin: repoData.owner.login,
+                    ownerAvatar: repoData.owner.avatar_url,
+                };
+            } catch (error) {
+                console.error(error);
+                showToast("Failed to fetch repository data");
+                return null;
+            }
+        }
+
+        function animateValue(id, start, end, duration) {
+            if (end === undefined || end === null) end = 0;
+            let range = end - start;
+            if (range === 0) {
+                document.getElementById(id).textContent = end;
+                return;
+            }
+            let current = start;
+            let increment = end > start ? 1 : -1;
+            let stepTime = Math.abs(Math.floor(duration / range));
+            const obj = document.getElementById(id);
+            const timer = setInterval(() => {
+                current += increment;
+                obj.textContent = current;
+                if (current === end) clearInterval(timer);
+            }, stepTime);
+        }
+
+        function animateScore(target) {
+            const scoreEl = document.getElementById("score");
+            let current = 0;
+            let increment = Math.ceil(target / 100);
+            const interval = setInterval(() => {
+                if (current >= target) {
+                    scoreEl.innerText = `${target} / 100`;
+                    clearInterval(interval);
+                } else {
+                    current += increment;
+                    if (current > target) current = target;
+                    scoreEl.innerText = `${current} / 100`;
+                }
+            }, 15);
+        }
+
+        async function generateDynamicSummary(repoData) {
+            let summary = [];
+
+            // 1️⃣ Commit Analysis
+            summary.push(analyzeCommitsDetailed(repoData.commitsList));
+
+            // 2️⃣ README Check
+            if (repoData.readme) {
+                summary.push("This repository includes a README file, which provides essential guidance and setup instructions for new users and contributors.");
+            } else {
+                summary.push("The repository is missing a README file. Adding one will help others understand your project, its purpose, and how to get started quickly.");
+            }
+
+            // 3️⃣ Repository Structure
+            summary.push(analyzeStructureDetailed(repoData.files));
+
+            // 4️⃣ Languages / Tech Stack
+            summary.push(analyzeLanguagesDetailed(repoData.languages));
+
+            // 5️⃣ Popularity & Visibility
+            if (repoData.stars > 0) {
+                summary.push(`With ${repoData.stars} star${repoData.stars > 1 ? 's' : ''}, this repository has some visibility in the community, indicating that others find it useful or interesting.`);
+            } else {
+                summary.push("Currently, the repository has low visibility. Consider sharing it on social platforms or developer communities to attract more attention.");
+            }
+
+            // 6️⃣ Tests Presence
+            const hasTests = repoData.files.some(f => /test/i.test(f.name) || f.name.includes("__tests__"));
+            if (hasTests) {
+                summary.push("Automated tests are present, which helps ensure code reliability and makes collaboration easier.");
+            } else {
+                summary.push("No automated tests were detected. Adding unit or integration tests will improve code quality and make the project more maintainable.");
+            }
+
+            // 7️⃣ Additional Insights
+            if (repoData.forks > 0) {
+                summary.push(`This repository has been forked ${repoData.forks} time${repoData.forks > 1 ? 's' : ''}, showing community interest in using or contributing to it.`);
+            }
+
+            // 8️⃣ Overall Summary
+            summary.push("Overall, this repository shows promise but could benefit from improvements in documentation, testing, and community engagement to maximize its impact.");
+
+            return summary.join(" ");
+        }
+
+        // Helper functions for richer analysis
+
+        function analyzeCommitsDetailed(commits) {
+            if (!commits || commits.length === 0) {
+                return "No commits found. The repository appears inactive.";
+            }
+
+            if (commits.length === 1) {
+                return "Only one commit is present. The repository has minimal activity.";
+            }
+
+            let inconsistent = false;
+            for (let i = 1; i < commits.length; i++) {
+                const prev = new Date(commits[i - 1].commit.author.date);
+                const curr = new Date(commits[i].commit.author.date);
+                const diffDays = Math.abs((prev - curr) / (1000 * 60 * 60 * 24));
+                if (diffDays > 30) inconsistent = true; // gap > 1 month
+            }
+
+            if (inconsistent) {
+                return "Commit history shows inconsistent contributions, with long gaps between commits.";
+            } else if (commits.length < 5) {
+                return `Commit history shows some activity, but only ${commits.length} commit(s) so far.`;
+            } else {
+                return "Commit history indicates consistent contributions, which is a good sign of ongoing maintenance and active development.";
+            }
+        }
+
+        function analyzeStructureDetailed(files) {
+            if (!files || files.length === 0) return "No files or folders are present in the repository.";
+
+            const totalFiles = files.length;
+            const mainFolders = ["src", "lib", "tests", "docs"].filter(f => files.some(file => file.name.toLowerCase().includes(f)));
+            const folderList = mainFolders.length ? mainFolders.join(", ") : "no major structured folders";
+
+            return `The repository contains ${totalFiles} file${totalFiles > 1 ? 's' : ''} and key folders: ${folderList}. Having a clear folder structure improves readability and maintainability.`;
+        }
+
+        function analyzeLanguagesDetailed(languages) {
+            const langList = Object.keys(languages || {});
+            if (!langList.length) return "No programming languages could be detected in the repository.";
+
+            // Only list names, no bytes
+            return `This project primarily uses the following languages/technologies: ${langList.join(", ")}. Understanding the tech stack helps contributors know what skills are needed.`;
+        }
+
+        function showToast(message, type = "error", duration = 3000) {
+            const container = document.getElementById("toast-container");
+
+            const colors = {
+                success: "bg-green-500",
+                error: "bg-red-500",
+                info: "bg-blue-500",
+                warning: "bg-yellow-500"
+            };
+
+            const toast = document.createElement("div");
+            toast.className = `text-white px-4 py-2 rounded-lg shadow-lg opacity-0 transform translate-y-4 transition-all duration-300 ${colors[type]}`;
+            toast.textContent = message;
+
+            container.appendChild(toast);
+
+            // Animate in
+            setTimeout(() => {
+                toast.classList.remove("opacity-0", "translate-y-4");
+                toast.classList.add("opacity-100", "translate-y-0");
+            }, 50);
+
+            // Remove after duration
+            setTimeout(() => {
+                toast.classList.remove("opacity-100", "translate-y-0");
+                toast.classList.add("opacity-0", "translate-y-4");
+                setTimeout(() => container.removeChild(toast), 300);
+            }, duration);
+        }
+
+    </script>
+
+</body>
+
+</html>
